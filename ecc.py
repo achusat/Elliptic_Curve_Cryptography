@@ -45,7 +45,6 @@ class curve:
         else:
             return False
 
-obj = curve()
 #Modular multiplicative inverse using fast power algorithm
 def modulo_multiplicative_inverse(A, M):
     return fast_power(A, M-2, M)
@@ -65,50 +64,56 @@ def fast_power(base, power, MOD):
     return result
 
 #Addition of point to the generator point
-def addition(O, Xq, Yq):
-        sn = (O.Gy - Yq) % O.p
-        sd = O.Gx - Xq
+def addition(O, x, y, Xq, Yq):
+        sn = (y - Yq) % O.p
+        sd = x - Xq
         sd = modulo_multiplicative_inverse(sd, O.p)
         s = (sn * sd) % O.p
-        Xr = (s**2 - (O.Gx + Xq)) % O.p
-        Yr = (s * (O.Gx - Xr) - O.Gy) % O.p
+        Xr = (s**2 - (x + Xq)) % O.p
+        Yr = (s * (x - Xr) - y) % O.p
         return Xr, Yr
 
 #Doubling the generator point
-def double(O):
-        sn = (3 * (O.Gx**2) + O.a) % O.p
-        sd = 2 * O.Gy
+def double(O, x, y):
+        sn = (3 * (x**2) + O.a) % O.p
+        sd = 2 * y
         sd = modulo_multiplicative_inverse(sd, O.p)
         s = (sn * sd) % O.p
-        Xr = (s**2 - 2*O.Gx) % O.p
-        Yr = (s * (O.Gx - Xr) - O.Gy) % O.p
+        Xr = (s**2 - 2*x) % O.p
+        Yr = (s * (x - Xr) - y) % O.p
         return Xr , Yr
 
 #Scalar multiplication on generator point
-def scalar_multiplication(O, n):
-    xr, yr = double(O)
+def scalar_multiplication(O, x, y, n):
+    xr, yr = double(O, x, y)
     n = n - 2
     while (n != 0):
-        xr, yr = addition(O, xr, yr)
+        xr, yr = addition(O, x, y, xr, yr)
         n = n - 1
         
     return xr, yr
 
-x, y = scalar_multiplication(obj, 15)
-print(x,y)
-print(obj.check(x,y))
-#print(modulo_multiplicative_inverse(5, 11))
-'''
+obj = curve()
+
 def bob():
     b = int(input("Enter Bob's private key: "))
-    pbx, pby = obj.scalar_multiplication(b)
-    return pbx, pby
+    pbx, pby = scalar_multiplication(obj, obj.Gx, obj.Gy, b)
+    return pbx, pby, b
 
 def alice():
     a = int(input("Enter Alice's private key: "))
-    pax, pay = obj.scalar_multiplication(a)
-    return pax, pay
+    pax, pay = scalar_multiplication(obj,obj.Gx, obj.Gy, a)
+    return pax, pay, a
 
-print(bob())
-print(alice())
-'''
+#Diffie Hellman key exchange
+def key_exchange():
+    pbx, pby, b = bob()
+    pax, pay, a = alice()
+    sk_bx, sk_by = scalar_multiplication(obj, pax, pay, b)
+    sk_ax, sk_ay= scalar_multiplication(obj, pbx, pby, a)
+    if (sk_bx == sk_ax) and (sk_by == sk_ay):
+        print("same keys")
+        print(obj.check(sk_ax, sk_ay))
+        return sk_ax, sk_ay
+
+print(key_exchange())
