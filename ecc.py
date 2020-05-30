@@ -4,20 +4,20 @@ import matplotlib.pyplot as plt
 class curve:
     a, b, p, Gx, Gy=0, 0, 0, 0, 0
     def __init__(self):
+        #Prime curve
+        self.p = int(input("Enter a large prime number p: "))
         #Accepting the parameters necessary for the elliptic curve
         ctr = 0
-        # Parameters a and b should satisfy (4*(a**3)) + (27*(b**2)) != 0
+        # Parameters a and b should satisfy ((4*(a**3)) + (27*(b**2))) % p != 0
         while ctr == 0:
             self.a = int(input("Enter the curve parameter a: "))
             self.b = int(input("Enter the curve parameter b: "))
-            val = (4*(self.a**3)) + (27*(self.b**2))
+            val = ((4*(self.a**3)) + (27*(self.b**2))) % self.p
             if val != 0:
                 ctr = 1
             else:
                 print("Parameters a and b do not satisfy the conditions to be used in an elliptic curve")
-
-        #Prime curve
-        self.p = int(input("Enter a large prime number p: "))
+        
         ctr = 0
         while ctr == 0:
             self.Gx = int(input("Enter the curve parameter Gx: "))
@@ -117,3 +117,27 @@ def key_exchange():
         return sk_ax, sk_ay
 
 print(key_exchange())
+
+def encode(O):
+    msg = input("Enter the message: ")
+    k = len(msg)
+    print(k)
+    b = 2 ** 16
+    m = 0
+    d = 100
+    for i in range(k):
+        a = ord(msg[i])
+        print(a)
+        b_exp = b ** i
+        m += (a * b_exp)
+    for i in range(d):
+        x = (d*m + i) % O.p
+        s = (x**3 + O.a*3 + O.b) % O.p
+        if s == (s**int(((O.p+1)/2))) % O.p:
+            y = (s**int(((O.p+1)/4))) % O.p
+            if O.check(x,y) == True:
+                return(x,y)
+
+
+print(encode(obj))
+print(obj.check(3,1))
